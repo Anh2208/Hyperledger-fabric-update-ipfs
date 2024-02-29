@@ -148,7 +148,7 @@ export const updateVerifyList = async (req, res) => {
         const contract = network.getContract(chaincodeName);
         const existStudent = await Verify.findOne({ mssv: verify.mssv });
 
-        const daotao = await contract.evaluateTransaction('CheckRector');
+        const daotao = await contract.evaluateTransaction('Checkdaotao');
 
         console.log("JSON.parse(resultJSON.toString());", JSON.parse(daotao.toString()));
 
