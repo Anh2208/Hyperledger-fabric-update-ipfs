@@ -44,7 +44,10 @@ class StoreContract extends Contract {
     }
 
     let cid = new ClientIdentity(ctx.stub);
-    if (!cid.assertAttributeValue('role', 'teacher') && !cid.assertAttributeValue('role', 'admin') && !cid.assertAttributeValue('role', 'daotao')) {
+    // if (!cid.assertAttributeValue('role', 'teacher') && !cid.assertAttributeValue('role', 'admin') && !cid.assertAttributeValue('role', 'daotao')) {
+    //   throw new Error('Not a valid User');
+    // }
+    if (!cid.assertAttributeValue('role', 'teacher') && !cid.assertAttributeValue('role', 'daotao')) {
       throw new Error('Not a valid User');
     }
     if (cid.assertAttributeValue('role', 'teacher')) {
@@ -242,7 +245,10 @@ class StoreContract extends Contract {
     }
     // kiểm tra role của người dùng
     let cid = new ClientIdentity(ctx.stub);
-    if (!cid.assertAttributeValue('role', 'teacher') && !cid.assertAttributeValue('role', 'admin') && !cid.assertAttributeValue('role', 'daotao')) {
+    // if (!cid.assertAttributeValue('role', 'teacher') && !cid.assertAttributeValue('role', 'admin') && !cid.assertAttributeValue('role', 'daotao')) {
+    //   throw new Error('Not a valid User');
+    // }
+    if (!cid.assertAttributeValue('role', 'teacher') && !cid.assertAttributeValue('role', 'daotao')) {
       throw new Error('Not a valid User');
     }
     if (cid.assertAttributeValue('role', 'teacher')) {
