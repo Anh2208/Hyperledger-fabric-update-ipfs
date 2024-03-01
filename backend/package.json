@@ -16,7 +16,8 @@
     "lint": "eslint *.js"
   },
   "dependencies": {
-    "@web3-storage/w3up-client": "^10.3.0",
+    "@ucanto/principal": "^9.0.0",
+    "@web3-storage/w3up-client": "^12.4.1",
     "bcryptjs": "^2.4.3",
     "config": "^3.3.9",
     "cookie-parser": "^1.4.6",
@@ -26,6 +27,8 @@
     "fabric-ca-client": "^2.2.19",
     "fabric-contract-api": "^2.5.4",
     "fabric-network": "^2.2.4",
+    "files-from-path": "^1.0.4",
+    "fs-extra": "^11.2.0",
     "jsonwebtoken": "^9.0.2",
     "jsrsasign": "^10.8.6",
     "mongodb": "^6.1.0",

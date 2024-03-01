@@ -12,6 +12,7 @@ import adminRoute from "./routes/admin.js";
 import groupRoute from "./routes/group.js";
 import degreeRoute from "./routes/degree.js";
 import VerifyRoute from "./routes/verify.js";
+import { create } from '@web3-storage/w3up-client'
 
 //blokchain action
 // import loadNetwork from "./loaders/fabric-loader.js"
@@ -45,6 +46,15 @@ const connect = async () => {
 //   serverSelectionTimeoutMS: 30000, // Tăng thời gian chờ lên 30 giây
 //   socketTimeoutMS: 45000, // Tăng thời gian chờ cho socket lên 45 giây
 // });
+const connectIPFS = async () => {
+  try {
+    const client = await create()
+    await client.login('anhvh1412@gmail.com')
+    console.log("IPFS Connected Success!!!");
+  } catch (error) {
+    console.log("Error connect ipfs", error);
+  }
+};
 
 //middleware
 app.use(express.json({ limit: '50mb' }));
@@ -70,6 +80,7 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true, parameterLimit: 1
 // loadNetwork("Org1MSP");
 await fabric_initial_system("Org1MSP");
 await create_user("appUser", 'admin'); // public user
+await create_user("giaovu@gmail.com", 'admin'); // public user
 await create_user("daotao@gmail.com", 'daotao'); // daotao
 await create_user("giangvien@gmail.com", "teacher"); // teacher
 // create NFT smart contract
@@ -77,6 +88,7 @@ await InitializeNFT();
 // testConnect();
 
 app.listen(port, () => {
+  connectIPFS();
   connect();
   console.log("Server listen port at:", port);
 });

@@ -325,6 +325,7 @@ const DegreeVerify = () => {
 
             reader.readAsDataURL(file);
         }
+        setImage(file);
     }
 
     // console.log("file image is", image);

@@ -2,14 +2,20 @@ import mongoose from "mongoose";
 import { Wallets, Gateway } from "fabric-network";
 import { buildWallet, buildCCPOrg1 } from "../services/fabric/AppUtil.js";
 import jwt from "jsonwebtoken";
-import fs from "fs";
+// import fs from "fs";
+import fs from 'fs-extra'
+// import { readFileSync } from 'fs'
 import dotenv from "dotenv";
 import path from "path";
-import { fileURLToPath } from "url";
+import { fileURLToPath, pathToFileURL } from "url";
 import { dirname } from "path";
 import Degree from "../models/Degree.js";
 import { Web3Storage } from 'web3.storage';
 import { getFilesFromPath } from 'web3.storage';
+import { importDAG } from '@ucanto/core/delegation'
+import { CarReader } from '@ipld/car'
+import { create } from '@web3-storage/w3up-client'
+import { filesFromPaths } from 'files-from-path'
 
 dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
@@ -21,17 +27,48 @@ const chaincodeName = "ledger";
 const mspOrg1 = "Org1MSP";
 const cppUser = JSON.parse(fs.readFileSync(process.env.ccpPATH, "utf8"));
 
+/** @param {string} data Base64 encoded CAR file */
+async function parseProof(data) {
+    const blocks = []
+    const reader = await CarReader.fromBytes(Buffer.from(data, 'base64'))
+    for await (const block of reader.blocks()) {
+        blocks.push(block)
+    }
+    return importDAG(blocks)
+}
 
 export const createDegree = async (req, res) => {
     let degree = req.body;
     const base64Image = req.body.image;
     let classification = ''
+    //test
+    const base64Data1 = base64Image.replace(/^data:image\/\w+;base64,/, '');
 
-    //  Lấy dữ liệu và đẩy lên ipfs server
-    const tempFileName = "temp_image";
-    fs.writeFileSync(tempFileName, Buffer.from(base64Image));
-    const client = new Web3Storage({ token: process.env.Web3Token });
-    const files = await getFilesFromPath(tempFileName);
+    // Chuyển đổi dữ liệu base64 thành dữ liệu nhị phân
+    const binaryData = Buffer.from(base64Data1, 'base64');
+
+    // Tạo và lưu file hình ảnh
+    await fs.writeFile('image.jpg', binaryData, 'binary', (err) => {
+        if (err) {
+            console.error(err);
+        } else {
+            console.log('File hình ảnh đã được lưu thành công.');
+        }
+    });
+
+    // //  Lấy dữ liệu và đẩy lên ipfs server
+    // const tempFileName = "temp_image";
+    // // fs.write(tempFileName, Buffer.from(base64Image));
+    // const fd = fs.openSync(tempFileName, 'w');
+    // fs.writeSync(fd, Buffer.from(base64Image));
+    // fs.closeSync(fd);
+    const path = process.env.PATH_TO_FILES
+    const files = await filesFromPaths([path])
+
+    // const client = new Web3Storage({ token: process.env.Web3Token });
+
+    const client = await create()
+    await client.setCurrentSpace(process.env.KEY)
 
     // create session
     const session = await mongoose.startSession();
@@ -40,8 +77,6 @@ export const createDegree = async (req, res) => {
     // get identify
     const token = req.cookies.UserToken;
     const user = await getUserFromToken(token);
-    // console.log("user in create is", user.email);
-    // console.log("image result is ", req.body.image);
 
     //connect to hyperledger fabric network and contract
     const wallet = await buildWallet(Wallets, walletPath);
@@ -72,9 +107,6 @@ export const createDegree = async (req, res) => {
         }
 
         const existingDegree = await Degree.findOne({ $or: [{ code: degree.code }, { inputbook: degree.inputbook }] });
-        const rootCid = await client.put(files);
-        console.log("CID của tệp đã tải lên Web3Storage:", rootCid);
-        fs.unlinkSync(tempFileName);
         if (existingDegree) {
             await session.abortTransaction();
             session.endSession();
@@ -82,6 +114,12 @@ export const createDegree = async (req, res) => {
             res.status(400).json({ success: false, message: "Lỗi: Số hiệu hoặc số vào sổ đã tồn tại" });
             return;
         }
+
+        const rootCid = await client.uploadDirectory(files)
+
+        console.log("CID của tệp đã tải lên Web3Storage:", rootCid);
+        // fs.unlinkSync(tempFileName);
+        fs.unlinkSync('image.jpg');
 
         // Thử thực hiện giao dịch trên ledger
         await contract.submitTransaction(
@@ -179,22 +217,26 @@ export const getDegreeImage = async (req, res) => {
                 message: "Không có kết quả trong blockchain!!!",
             });
         }
-        const client = new Web3Storage({ token: process.env.Web3Token });
-        const get = await client.get(jsoncompare.image); // Web3Response
-        const files = await get.files(); // Web3File[]
-        for (const file of files) {
-            console.log(`${file.cid} ${file.name} ${file.size}`);
-        }
-        if (files.length > 0) {
-            // Nếu có tệp trong danh sách files
-            const imageFile = files[0]; // Giả sử tệp hình ảnh là tệp đầu tiên trong danh sách
-            const imageData = await imageFile.arrayBuffer(); // Đọc dữ liệu của tệp hình ảnh
+        // const client = new Web3Storage({ token: process.env.Web3Token });
+        // const client = await create()
+        // // await client.setCurrentSpace(process.env.KEY)
+        // const test = await client.getReceipt(jsoncompare.image);
+        // console.log("test:", test)
+        // const get = await client.get(jsoncompare.image); // Web3Response
+        // const files = await get.files(); // Web3File[]
+        // for (const file of files) {
+        //     console.log(`${file.cid} ${file.name} ${file.size}`);
+        // }
+        // if (files.length > 0) {
+        //     // Nếu có tệp trong danh sách files
+        //     const imageFile = files[0]; // Giả sử tệp hình ảnh là tệp đầu tiên trong danh sách
+        //     const imageData = await imageFile.arrayBuffer(); // Đọc dữ liệu của tệp hình ảnh
 
-            // Chuyển dữ liệu tệp hình ảnh thành mã base64
-            let base64Image = Buffer.from(imageData).toString();
+        //     // Chuyển dữ liệu tệp hình ảnh thành mã base64
+        //     let base64Image = Buffer.from(imageData).toString();
 
-            jsoncompare.image = base64Image;
-        }
+        //     jsoncompare.image = base64Image;
+        // }
         // console.log("degreee is", jsoncompare.image);
         res.status(200).json({ success: true, message: "Successful find history Result", data: jsoncompare, });
     } catch (e) {

@@ -98,7 +98,8 @@ const StudentDegree = () => {
                         <div className='col-span-3 hover14 column'>
                             {image && (
                                 <div className='flex justify-center'>
-                                    <figure><img src={`data:${image}`} alt="Bằng cấp" className='rounded-lg shadow-2xl h-[470px]' /></figure>
+                                    {/* <figure><img src={`data:${image}`} alt="Bằng cấp" className='rounded-lg shadow-2xl h-[470px]' /></figure> */}
+                                    <figure><img src={`https://${image}.ipfs.w3s.link/image.jpg`} alt="Bằng cấp" className='rounded-lg shadow-2xl h-[470px]' /></figure>
                                 </div>
                             )}
                         </div>

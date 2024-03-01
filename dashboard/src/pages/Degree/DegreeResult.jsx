@@ -22,9 +22,9 @@ const DegreeResult = () => {
             const response = await axiosInstance.get(`${BASE_URL}degree`, {
                 params: { mssv: mssv } // Sử dụng giá trị từ ô input
             });
+            console.log("response.data.data.image is", response);
 
             setDegree(response.data.data);
-            console.log("response.data.data.image is", response.data.data.image);
             const adjustedImage = response.data.data.image.replace('data', 'data:').replace('base64', ';base64,');
             // const adjustedImage = `data:image/jpg;base64,${btoa(response.data.data.image)}`;
             console.log("adjustedImage is", adjustedImage);
@@ -42,7 +42,6 @@ const DegreeResult = () => {
         }
         setState(false);
     }
-
     const handleSearch = (e) => {
         e.preventDefault();
         fetchData();
@@ -103,7 +102,8 @@ const DegreeResult = () => {
                     <div className='col-span-3 hover14 column'>
                         {image && (
                             <div className='flex justify-center'>
-                                <figure><img src={`${image}`} alt="Bằng cấp" className='rounded-lg shadow-2xl h-[470px]' /></figure>
+                                {/* <figure><img src={`${image}`} alt="Bằng cấp" className='rounded-lg shadow-2xl h-[470px]' /></figure> */}
+                                <figure><img src={`https://${image}.ipfs.w3s.link/image.jpg`} alt="Bằng cấp" className='rounded-lg shadow-2xl h-[470px]' /></figure>
                                 {/* <figure><img src={`data:${image}`} alt="Bằng cấp" className='rounded-lg shadow-2xl h-[470px]' /></figure> */}
                             </div>
                         )}
