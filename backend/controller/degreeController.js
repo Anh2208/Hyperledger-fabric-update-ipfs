@@ -38,64 +38,41 @@ async function parseProof(data) {
 }
 
 export const createDegree = async (req, res) => {
-    let degree = req.body;
+    const degree = req.body;
     const base64Image = req.body.image;
-    let classification = ''
-    //test
-    const base64Data1 = base64Image.replace(/^data:image\/\w+;base64,/, '');
 
-    // Chuyển đổi dữ liệu base64 thành dữ liệu nhị phân
-    const binaryData = Buffer.from(base64Data1, 'base64');
-
-    // Tạo và lưu file hình ảnh
-    await fs.writeFile('image.jpg', binaryData, 'binary', (err) => {
-        if (err) {
-            console.error(err);
-        } else {
-            console.log('File hình ảnh đã được lưu thành công.');
-        }
-    });
-
-    // //  Lấy dữ liệu và đẩy lên ipfs server
-    // const tempFileName = "temp_image";
-    // // fs.write(tempFileName, Buffer.from(base64Image));
-    // const fd = fs.openSync(tempFileName, 'w');
-    // fs.writeSync(fd, Buffer.from(base64Image));
-    // fs.closeSync(fd);
-    const path = process.env.PATH_TO_FILES
-    const files = await filesFromPaths([path])
-
-    // const client = new Web3Storage({ token: process.env.Web3Token });
-
-    const client = await create()
-    await client.setCurrentSpace(process.env.KEY)
-
-    // create session
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    // get identify
-    const token = req.cookies.UserToken;
-    const user = await getUserFromToken(token);
-
-    //connect to hyperledger fabric network and contract
-    const wallet = await buildWallet(Wallets, walletPath);
-    const gateway = new Gateway();
-
-    await gateway.connect(cppUser, {
-        wallet,
-        identity: String(user.email),
-        discovery: { enabled: true, asLocalhost: true },
-    });
-    const network = await gateway.getNetwork(channelName);
-    const contract = network.getContract(chaincodeName);
+    const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, '');
+    const binaryData = Buffer.from(base64Data, 'base64');
 
     try {
+        await fs.promises.writeFile('image.jpg', binaryData, 'binary');
+        const path = process.env.PATH_TO_FILES;
+        const files = await filesFromPaths([path]);
+        const client = await create();
+        await client.setCurrentSpace(process.env.KEY);
+
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
+        const token = req.cookies.UserToken;
+        const user = await getUserFromToken(token);
+
+        const wallet = await buildWallet(Wallets, walletPath);
+        const gateway = new Gateway();
+        await gateway.connect(cppUser, {
+            wallet,
+            identity: String(user.email),
+            discovery: { enabled: true, asLocalhost: true },
+        });
+        const network = await gateway.getNetwork(channelName);
+        const contract = network.getContract(chaincodeName);
+
         const exist = await contract.evaluateTransaction('DegreeExists', degree.studentMS, degree.major);
         if (exist.toString() == true) {
-            res.status(400).json({ success: false, message: "Lỗi: Bằng cần tạo dã tồn tại trong Blockchain" });
-            return;
+            throw new Error("Lỗi: Bằng cần tạo đã tồn tại trong Blockchain");
         }
+
+        let classification = '';
         if (degree.score && degree.score >= 3.6 && degree.score <= 4) {
             classification = 'Xuất sắc';
         } else if (degree.score >= 3.2 && degree.score < 3.6) {
@@ -108,62 +85,46 @@ export const createDegree = async (req, res) => {
 
         const existingDegree = await Degree.findOne({ $or: [{ code: degree.code }, { inputbook: degree.inputbook }] });
         if (existingDegree) {
-            await session.abortTransaction();
-            session.endSession();
-            gateway.disconnect();
-            res.status(400).json({ success: false, message: "Lỗi: Số hiệu hoặc số vào sổ đã tồn tại" });
-            return;
+            throw new Error("Lỗi: Số hiệu hoặc số vào sổ đã tồn tại");
         }
 
-        const rootCid = await client.uploadDirectory(files)
+        const rootCid = await client.uploadDirectory(files);
 
         console.log("CID của tệp đã tải lên Web3Storage:", rootCid);
-        // fs.unlinkSync(tempFileName);
         fs.unlinkSync('image.jpg');
 
-        // Thử thực hiện giao dịch trên ledger
-        await contract.submitTransaction(
-            "createDegree",
+        await contract.submitTransaction("createDegree",
             'Đại Học Cần Thơ',
-            (degree.degreeType),
-            (degree.major),
-            (degree.studentMS),
-            (degree.studentName),
-            (degree.studentDate),
-            (degree.score),
+            degree.degreeType,
+            degree.major,
+            degree.studentMS,
+            degree.studentName,
+            degree.studentDate,
+            degree.score,
             classification,
-            (degree.formOfTraining),
-            (degree.code),
-            (degree.inputbook),
-            (rootCid),
+            degree.formOfTraining,
+            degree.code,
+            degree.inputbook,
+            rootCid
         );
         console.log("Degree created on the ledger");
 
         const saveDegree = await Degree.create({
             university: 'Đại học Cần Thơ',
-            degreeType: degree.degreeType,
-            major: degree.major,
-            studentMS: degree.studentMS,
-            studentName: degree.studentName,
-            studentDate: degree.studentDate,
-            score: degree.score,
-            classification: classification,
-            formOfTraining: degree.formOfTraining,
-            code: degree.code,
-            inputbook: degree.inputbook,
+            ...degree,
+            classification,
             image: degree.image,
         });
 
         await session.commitTransaction();
         session.endSession();
         gateway.disconnect();
-        res
-            .status(200)
-            .json({
-                success: true,
-                message: "Create Degree successfully!!!",
-                data: saveDegree,
-            });
+
+        res.status(200).json({
+            success: true,
+            message: "Create Degree successfully!!!",
+            data: saveDegree,
+        });
     } catch (e) {
         console.log("Error creating degree on the ledger", e);
         await session.abortTransaction();
@@ -175,12 +136,12 @@ export const createDegree = async (req, res) => {
         } else if (e.message.includes("Not have access")) {
             err = "Lỗi cấp bằng, không được cấp quyền";
         } else {
-            err = e;
+            err = e.message;
         }
-
         res.status(400).json({ success: false, message: err });
     }
 }
+
 
 export const getDegreeImage = async (req, res) => {
     let studentMS = req.query.mssv;
