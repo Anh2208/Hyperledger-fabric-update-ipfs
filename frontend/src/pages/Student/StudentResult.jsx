@@ -171,9 +171,9 @@ const StudentResult = () => {
                                             <th className='w-[50px]'>STT</th>
                                             <th className='w-[100px]'>Mã HP</th>
                                             <th className='w-auto'>Tên HP</th>
-                                            <th className='w-[80px]'>Tín chỉ</th>
-                                            <th className='w-[80px]'>Điểm chữ</th>
-                                            <th className='w-[80px]'>Điểm số</th>
+                                            <th className='w-[80px]'>Số Tín chỉ</th>
+                                            <th className='w-[80px]'>Điểm</th>
+                                            {/* <th className='w-[80px]'>Điểm số</th> */}
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -184,7 +184,7 @@ const StudentResult = () => {
                                                 <td className='text-left w-auto'>{result.subjectTen}</td>
                                                 <td className='w-[80px]'>{result.subjectSotc}</td>
                                                 <td className='w-[80px]'>{result.score}</td>
-                                                <td className='w-[80px]'>Rỗng</td>
+                                                {/* <td className='w-[80px]'>Rỗng</td> */}
                                             </tr>
                                         ))}
                                     </tbody>

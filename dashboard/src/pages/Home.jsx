@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { Link } from 'react-router-dom'
 import MonHoc from "../asset/images/subject.png"
 import LopHoc from "../asset/images/class.png"
@@ -6,6 +6,7 @@ import QLDiem from "../asset/images/score.png"
 import QLUser from "../asset/images/account.svg"
 import Degree from "../asset/images/degree.png"
 import Exam from "../asset/images/result01.png"
+import { AuthContext } from "../context/AuthContext.jsx"
 
 const cardLinks = [
   {
@@ -42,8 +43,8 @@ const cardLinks = [
 
 const Home = () => {
 
-
-
+  const { user } = useContext(AuthContext)
+  console.log("user", user);
   return (
     <>
       <section className=" xl:px-0 container pt-2 pb-0">
@@ -54,19 +55,19 @@ const Home = () => {
               <h1 className="infor-user justify-center mb-3">Thông tin</h1>
               {/* <div> */}
               <div className="grid grid-cols-2 gap-2 p-5" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr' }}>
-                <div className='font-bold'>Mã GV: </div>
-                <div>A123231</div>
+                <div className='font-bold'>Mã số: </div>
+                <div>{user.adminMS}</div>
 
                 <div className='font-bold' >Họ tên: </div>
-                <div>Đinh Hoàng Anh</div>
+                <div>{user.name}</div>
 
-                <div className='font-bold'>Giới tính: </div>
+                <div className='font-bold'>SDT: </div>
                 <div>
-                  Nam
+                  {user.sdt}
                 </div>
 
                 <div className='font-bold'>Email: </div>
-                <div>Anhvh1412@gmail.com</div>
+                <div>{user.email}</div>
               </div>
               {/* </div> */}
             </div>
